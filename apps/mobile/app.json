@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Janjathi Setu",
+    "slug": "janjathi-setu",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "janjathi",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#F9F7F4"
+    },
+    "ios": { "supportsTablet": true },
+    "android": {
+      "package": "com.jss.mobile"
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "name": "janjathi-shiksha-setu",
+  "version": "1.0.0",
+  "private": true,
+  "description": "One Platform. One Profile. One Right. — Unified scholarship management platform for ST students",
+  "workspaces": [
+    "apps/*",
+    "services/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=services/api",
+    "dev:admin": "npm run dev --workspace=apps/admin",
+    "dev:mobile": "npm run start --workspace=apps/mobile",
+    "build:api": "npm run build --workspace=services/api",
+    "build:admin": "npm run build --workspace=apps/admin",
+    "test": "npm run test --workspaces --if-present",
+    "db:setup": "npm run db:setup --workspace=services/api",
+    "db:seed": "npm run db:seed --workspace=services/api"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

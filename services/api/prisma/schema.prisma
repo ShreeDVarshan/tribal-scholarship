@@ -1,0 +1,319 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(uuid())
+  mobile        String   @unique
+  email         String?  @unique
+  passwordHash  String
+  role          String   @default("STUDENT") // STUDENT | ADMIN
+  isActive      Boolean  @default(true)
+  otpHash       String?
+  otpExpiry     DateTime?
+  refreshTokens RefreshToken[]
+  studentProfile StudentProfile?
+  adminProfile   AdminProfile?
+  jagoConversations JagoConversation[]
+  notifications Notification[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model AdminProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  auditLogs AdminAuditLog[]
+}
+
+model StudentProfile {
+  id                 String   @id @default(uuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName           String
+  dateOfBirth        String
+  gender             String
+  mobile             String
+  email              String?
+  aadhaarMasked      String?
+  state              String
+  district           String
+  address            String?
+  pincode            String?
+  studentType        String   // SCHOOL | COLLEGE | RESEARCH | OVERSEAS
+  isSTCertified      Boolean  @default(false)
+  isFemale           Boolean  @default(false)
+  isDisabled         Boolean  @default(false)
+  disabilityType     String?
+  annualFamilyIncome Int?
+  casteCategory      String   @default("ST")
+  profileCompletion  Int      @default(0)
+  readinessScore     Int?     @default(0)
+  bankAccountMasked  String?
+  bankName           String?
+  bankVerified       Boolean  @default(false)
+  dbtActive          Boolean  @default(false)
+  academicProfile    AcademicProfile?
+  documents          Document[]
+  applications       ScholarshipApplication[]
+  payments           Payment[]
+  familyMembers      FamilyMember[]
+  notifications      Notification[]
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
+
+model AcademicProfile {
+  id                String   @id @default(uuid())
+  studentProfileId  String   @unique
+  studentProfile    StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  institutionName   String
+  institutionType   String   // SCHOOL | COLLEGE | UNIVERSITY | IIT_NIT | CENTRAL_UNIV
+  institutionState  String
+  udiseCode         String?
+  aisheCode         String?
+  apaarId           String?
+  course            String
+  stream            String?
+  academicYear      String
+  yearOfStudy       Int
+  enrollmentNo      String?
+  cgpa              Float?
+  lastYearMarks     Float?
+  isGovernmentInst  Boolean  @default(false)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model Document {
+  id                String   @id @default(uuid())
+  studentProfileId  String
+  studentProfile    StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  documentType      String   // ST_CERTIFICATE | INCOME | MARKSHEET | AADHAAR | BANK | DOMICILE | INSTITUTION | DISABILITY | RESEARCH
+  documentName      String
+  fileName          String?
+  fileUrl           String?
+  fileSize          Int?
+  mimeType          String?
+  status            String   @default("PENDING") // PENDING | VERIFIED | MISMATCH | FAILED | MANUAL_REVIEW | EXPIRED
+  issuedDate        String?
+  expiryDate        String?
+  verificationSource String?
+  lastVerifiedAt    DateTime?
+  isReusable        Boolean  @default(false)
+  isDeleted         Boolean  @default(false)
+  verifications     DocumentVerification[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model DocumentVerification {
+  id           String   @id @default(uuid())
+  documentId   String
+  document     Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  status       String   // VERIFIED | PENDING | MISMATCH | FAILED | MANUAL_REVIEW
+  source       String
+  confidence   Float?
+  reason       String?
+  rawResponse  String?
+  verifiedAt   DateTime @default(now())
+  createdAt    DateTime @default(now())
+}
+
+model ScholarshipScheme {
+  id                   String   @id @default(uuid())
+  code                 String   @unique // PRE_MATRIC | POST_MATRIC | TOP_CLASS | NFST | NOS
+  name                 String
+  shortName            String
+  description          String
+  ministry             String
+  department           String
+  targetGroup          String
+  maxAmount            Int
+  fundingType          String   // CENTRAL | STATE_SHARED
+  portalSource         String   // NSP | SFMP | NOS_PORTAL
+  isActive             Boolean  @default(true)
+  applicationOpenDate  String?
+  applicationCloseDate String?
+  eligibilityRules     EligibilityRule[]
+  applications         ScholarshipApplication[]
+  payments             Payment[]
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
+model EligibilityRule {
+  id          String   @id @default(uuid())
+  schemeId    String
+  scheme      ScholarshipScheme @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  ruleType    String   // ACADEMIC_LEVEL | INCOME | ST_STATUS | INSTITUTION_TYPE | RESEARCH | OVERSEAS
+  operator    String   // EQ | IN | LTE | GTE | BOOLEAN
+  field       String
+  value       String
+  isRequired  Boolean  @default(true)
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model ScholarshipApplication {
+  id                String   @id @default(uuid())
+  applicationNumber String   @unique
+  studentProfileId  String
+  studentProfile    StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  schemeId          String
+  scheme            ScholarshipScheme @relation(fields: [schemeId], references: [id])
+  status            String   @default("DRAFT")
+  // DRAFT | SUBMITTED | IDENTITY_VERIFICATION | DOCUMENT_VERIFICATION |
+  // INSTITUTION_VERIFICATION | DEPARTMENT_VERIFICATION | SANCTIONED |
+  // DBT_PROCESSING | DISBURSED | REJECTED | DEFICIENCY
+  academicYear      String
+  submittedAt       DateTime?
+  deficiencyReason  String?
+  deficiencyField   String?
+  sanctionedAmount  Int?
+  rejectionReason   String?
+  timeline          ApplicationStatusHistory[]
+  payments          Payment[]
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model ApplicationStatusHistory {
+  id             String   @id @default(uuid())
+  applicationId  String
+  application    ScholarshipApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  status         String
+  description    String
+  actionRequired String?
+  updatedBy      String?  @default("SYSTEM")
+  createdAt      DateTime @default(now())
+}
+
+model Payment {
+  id               String   @id @default(uuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  applicationId    String?
+  application      ScholarshipApplication? @relation(fields: [applicationId], references: [id])
+  schemeId         String
+  scheme           ScholarshipScheme @relation(fields: [schemeId], references: [id])
+  amount           Int
+  installment      String   // FIRST | SECOND | FULL | MAINTENANCE | TUITION
+  status           String   // PAID | PENDING | PROCESSING | FAILED
+  dbtReference     String?
+  paymentDate      DateTime?
+  academicYear     String
+  description      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Notification {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  studentProfileId String?
+  studentProfile   StudentProfile? @relation(fields: [studentProfileId], references: [id])
+  type             String
+  // APPLICATION_UPDATE | DOCUMENT_VERIFIED | ACTION_REQUIRED |
+  // PAYMENT_UPDATE | DEADLINE_REMINDER | PROFILE_UPDATE
+  title            String
+  body             String
+  data             String?  // JSON string
+  isRead           Boolean  @default(false)
+  createdAt        DateTime @default(now())
+}
+
+model FamilyMember {
+  id               String   @id @default(uuid())
+  studentProfileId String
+  studentProfile   StudentProfile @relation(fields: [studentProfileId], references: [id], onDelete: Cascade)
+  name             String
+  relation         String   // SELF | SIBLING | PARENT | GUARDIAN
+  mobile           String?
+  demoScheme       String?
+  demoStatus       String?
+  demoAmount       Int?
+  createdAt        DateTime @default(now())
+}
+
+model JagoConversation {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String?
+  language  String   @default("en")
+  messages  JagoMessage[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model JagoMessage {
+  id             String   @id @default(uuid())
+  conversationId String
+  conversation   JagoConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  role           String   // user | assistant
+  content        String
+  intent         String?
+  // APPLICATION_STATUS | DOCUMENTS | ELIGIBILITY | PAYMENT | PROFILE | GENERAL_FAQ | HELP
+  createdAt      DateTime @default(now())
+}
+
+model IntegrationLog {
+  id           String   @id @default(uuid())
+  adapter      String   // DIGILOCKER | UIDAI | APAAR | UDISE | EDISTRICT | UGC | NSP | SFMP | NOS
+  operation    String
+  status       String   // SUCCESS | FAILED | PENDING
+  requestData  String?
+  responseData String?
+  durationMs   Int?
+  createdAt    DateTime @default(now())
+}
+
+model AdminAuditLog {
+  id          String   @id @default(uuid())
+  adminId     String
+  admin       AdminProfile @relation(fields: [adminId], references: [id])
+  action      String
+  targetType  String?
+  targetId    String?
+  description String
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+}
+
+model CoverageGapRecord {
+  id              String   @id @default(uuid())
+  sourceSystem    String   // UDISE | APAAR | OTR
+  externalId      String
+  name            String
+  state           String
+  district        String
+  institutionName String
+  academicLevel   String   // SCHOOL | COLLEGE | RESEARCH
+  potentialScheme String   // PRE_MATRIC | POST_MATRIC | TOP_CLASS | NFST | NOS
+  status          String   @default("PENDING_OUTREACH") // PENDING_OUTREACH | FLAGGED | CONTACTED
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
