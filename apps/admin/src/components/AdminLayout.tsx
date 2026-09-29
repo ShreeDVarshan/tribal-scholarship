@@ -47,7 +47,7 @@ export const AdminLayout: React.FC = () => {
               </div>
               <div>
                 <h1 className="font-bold text-sm tracking-wide text-charcoal leading-tight">
-                  JANJATHI SETU
+                  JANJATHI SHIKSHA SETU
                 </h1>
                 <p className="text-[11px] text-[#666666] font-medium">Ministry of Tribal Affairs</p>
               </div>

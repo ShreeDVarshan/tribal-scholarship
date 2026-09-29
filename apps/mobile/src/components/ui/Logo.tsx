@@ -13,7 +13,7 @@ export const Logo: React.FC<LogoProps> = ({ size = 'md' }) => {
         <Text style={[styles.letter, size === 'lg' && styles.letterLg]}>J</Text>
       </View>
       <View>
-        <Text style={[styles.title, size === 'lg' && styles.titleLg]}>JANJATHI SETU</Text>
+        <Text style={[styles.title, size === 'lg' && styles.titleLg]}>JANJATHI SHIKSHA SETU</Text>
         <Text style={styles.subtitle}>Ministry of Tribal Affairs</Text>
       </View>
     </View>
